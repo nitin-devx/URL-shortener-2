@@ -19,4 +19,4 @@ connectDB()/// ITS store a promise
 })
 .catch((err)=>{
     console.log("MONGO DB CONNECTION FAILED",err)
-})
+});
