@@ -5,5 +5,5 @@ import react from "@vitejs/plugin-react";
 // If your backend PORT in .env is not 8000, change it here.
 export default defineConfig({
   plugins: [react()],
-  server: { proxy: { "/url": "http://localhost:8000" } },
+  server: { proxy: { "/url": "https://url-shortener-2-iqc5.onrender.com" } },
 });

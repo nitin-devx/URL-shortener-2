@@ -50,14 +50,14 @@ const urlShorten = asyncHandler(async (req, res) => {
       }
       throw err;
     }
-    return res.json({ short: `${base}/url/${alias}` });
+    return res.json({ short: `${base}/${alias}` });
   }
 
   // Random id: on the rare collision, retry with a new id.
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
       const doc = await Url.create({ shortId: nanoid(6), longUrl, expiresAt: expiry });
-      return res.json({ short: `${base}/url/${doc.shortId}` });
+      return res.json({ short: `${base}/${doc.shortId}` });
     } catch (err) {
       if (err.code !== DUPLICATE_KEY) throw err;
     }

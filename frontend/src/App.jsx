@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import "./App.css";
 
+
+const API = import.meta.env.VITE_API_URL || "";
 const STORAGE_KEY = "recentLinks";
 const ALIAS = /^[A-Za-z0-9-]{3,30}$/;
 
@@ -60,7 +62,7 @@ export default function App() {
     const updated = await Promise.all(
       list.map(async (item) => {
         try {
-          const res = await fetch(`/url/stats/${encodeURIComponent(item.id)}`);
+          const res = await fetch(`${API}/url/stats/${encodeURIComponent(item.id)}`);
           if (res.status === 404) return { ...item, gone: true };
           if (!res.ok) return item;
           const data = await res.json();
@@ -73,7 +75,7 @@ export default function App() {
     setLinks((current) => current.map((c) => updated.find((u) => u.id === c.id) ?? c));
   }
 
-   const linksRef = useRef(links);
+  const linksRef = useRef(links);
   useEffect(() => {
     linksRef.current = links;
   }, [links]);
@@ -117,7 +119,7 @@ export default function App() {
 
     setBusy(true);
     try {
-      const res = await fetch("/url/shorten", {
+      const res = await fetch(`${API}/url/shorten`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ longUrl: value, ...(code && { alias: code }), ...(expiresAt && { expiresAt }) }),
@@ -125,7 +127,12 @@ export default function App() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(problem(res, data));
       const id = idFrom(data.short);
-      setLink({ id, url: `${window.location.origin}/url/${id}`, host: `${window.location.host}/url/` });
+      const shortUrl = data.short;
+      setLink({
+        id,
+        url: shortUrl,
+        host: shortUrl.slice(0, shortUrl.length - id.length).replace(/^https?:\/\//, ""),
+      });
       setLinks((cur) => [{ id, longUrl: value, expiresAt, clicks: 0 }, ...cur.filter((l) => l.id !== id)].slice(0, 20));
       setLongUrl("");
       setAlias("");
@@ -145,7 +152,7 @@ export default function App() {
   async function remove(id) {
     setListError("");
     try {
-      const res = await fetch(`/url/${encodeURIComponent(id)}`, { method: "DELETE" });
+      const res = await fetch(`${API}/url/${encodeURIComponent(id)}`, { method: "DELETE" });
       if (!res.ok && res.status !== 404) {
         const data = await res.json().catch(() => ({}));
         throw new Error(problem(res, data));
@@ -163,7 +170,7 @@ export default function App() {
     const id = idFrom(lookup);
     if (!id) return;
     try {
-      const res = await fetch(`/url/stats/${encodeURIComponent(id)}`);
+      const res = await fetch(`${API}/url/stats/${encodeURIComponent(id)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(problem(res, data));
       setStats(data);
@@ -222,7 +229,7 @@ export default function App() {
             {links.map((l) => (
               <li key={l.id} className={l.gone ? "item gone" : "item"}>
                 <div className="item-main">
-                  <a className="code" href={`/url/${l.id}`} target="_blank" rel="noreferrer">{l.id}</a>
+                  <a className="code" href={`${API}/url/${l.id}`} target="_blank" rel="noreferrer">{l.id}</a>
                   <span className="dest">{l.longUrl}</span>
                   <span className="meta">
                     <span>{l.clicks ?? "–"} clicks</span>
